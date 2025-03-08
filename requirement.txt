@@ -1,0 +1,5 @@
+cvzone
+fastapi
+ultralytics
+uvcorn
+python-multipart
