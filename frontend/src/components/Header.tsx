@@ -28,33 +28,39 @@ export default function Header() {
   const { setTheme } = useTheme();
 
   return (
-    <header className="flex justify-between items-center shadow-md px-6 py-3 w-full">
+    <header className="flex justify-between items-center shadow-md px-12 py-3 w-full">
       {/* Logo + Brand */}
-      <div className="flex items-center gap-3">
-        <img src={logo} alt="Logo" className="w-10 h-10 object-contain" />
-        <span className="font-bold text-lg">Safety System</span>
-      </div>
+      <div className="flex items-center gap-12">
+        {/* Logo + Brand */}
+        <div className="flex items-center gap-3">
+          <img src={logo} alt="Logo" className="w-10 h-10 object-contain" />
+          <span className="text-primary text-xl tracking-wide [font-family:'Poopins']">
+            PPE Detection
+          </span>
+        </div>
 
-      {/* Nav */}
-      <NavigationMenu>
-        <NavigationMenuList>
-          {navItems.map((item) => (
-            <NavigationMenuItem key={item.href}>
-              <NavigationMenuLink asChild>
-                <Link
-                  to={item.href}
-                  className={cn(
-                    location.pathname === item.href
-                      ? "text-primary" // aktif
-                      : "" // non-aktif
-                  )}>
-                  {item.label}
-                </Link>
-              </NavigationMenuLink>
-            </NavigationMenuItem>
-          ))}
-        </NavigationMenuList>
-      </NavigationMenu>
+        {/* Nav */}
+        <NavigationMenu>
+          <NavigationMenuList className="flex gap-6">
+            {navItems.map((item) => (
+              <NavigationMenuItem key={item.href}>
+                <NavigationMenuLink asChild>
+                  <Link
+                    to={item.href}
+                    className={cn(
+                      "hover:text-primary text-base transition-colors",
+                      location.pathname === item.href
+                        ? "text-primary font-semibold"
+                        : "text-muted-foreground"
+                    )}>
+                    {item.label}
+                  </Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+            ))}
+          </NavigationMenuList>
+        </NavigationMenu>
+      </div>
 
       {/* Dark/Light Toggle */}
       <DropdownMenu>

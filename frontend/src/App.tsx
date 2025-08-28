@@ -1,12 +1,21 @@
-import Header from "./components/Header";
-import Main from "./components/Main";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Layout from "./Layout";
+import Home from "./components/Home";
+import History from "./components/History";
+import About from "./components/About";
 
 function App() {
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <Main />
-    </div>
+    <Router>
+      <Routes>
+        {/* Semua route yang menggunakan layout */}
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Home />} />
+          <Route path="riwayat" element={<History />} />
+          <Route path="tentang" element={<About />} />
+        </Route>
+      </Routes>
+    </Router>
   );
 }
 
