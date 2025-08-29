@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Layout from "./Layout";
 import Home from "./components/Home";
 import History from "./components/History";
-import About from "./components/About";
 
 function App() {
   return (
@@ -12,7 +11,6 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="riwayat" element={<History />} />
-          <Route path="tentang" element={<About />} />
         </Route>
       </Routes>
     </Router>

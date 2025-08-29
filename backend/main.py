@@ -55,7 +55,7 @@ async def detect_image(file: UploadFile = File(...), return_json: bool = False):
             if currentClass in ["Mask", "NO-Mask", "Person"]:
                 continue  # Lewati proses deteksi untuk kelas ini
 
-            if conf > 0.5:
+            if conf > 0.8:
                 color = (0, 255, 0) if "NO-" not in currentClass else (0, 0, 255)
                 cvzone.putTextRect(img, f'{currentClass} {conf}', (x1, y1), scale=1, thickness=1, colorB=color)
                 cv2.rectangle(img, (x1, y1), (x2, y2), color, 3)

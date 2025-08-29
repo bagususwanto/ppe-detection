@@ -20,7 +20,6 @@ import { useTheme } from "@/contexts/themeProvider";
 const navItems = [
   { href: "/", label: "Home" },
   { href: "/riwayat", label: "Riwayat" },
-  { href: "/tentang", label: "Tentang" },
 ];
 
 export default function Header() {

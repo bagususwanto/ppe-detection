@@ -2,7 +2,13 @@ import { useState, useRef } from "react";
 import axios from "axios";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Camera, CameraOff, RotateCcw } from "lucide-react";
+import {
+  Camera,
+  CameraOff,
+  CheckCircle,
+  RotateCcw,
+  XCircle,
+} from "lucide-react";
 
 export default function Home() {
   const [isCameraOn, setIsCameraOn] = useState(false);
@@ -200,11 +206,28 @@ export default function Home() {
           {/* JSON sebagai list class */}
           {resultJson && resultJson.detected_objects.length > 0 ? (
             <ul className="space-y-4">
-              {resultJson.detected_objects.map((obj: any, index: number) => (
-                <li className="border-b text-red-600" key={index}>
-                  {obj.class}
-                </li>
-              ))}
+              {resultJson.detected_objects.map((obj: any, index: number) => {
+                const isNoClass = obj.class.includes("NO"); // cek class yang ada "NO"
+                return (
+                  <li
+                    key={index}
+                    className={`flex items-center justify-between border-b py-1 ${
+                      isNoClass ? "text-red-600" : "text-green-600"
+                    }`}>
+                    <div className="flex items-center gap-2">
+                      {isNoClass ? (
+                        <XCircle className="w-5 h-5" />
+                      ) : (
+                        <CheckCircle className="w-5 h-5" />
+                      )}
+                      <span>{obj.class}</span>
+                    </div>
+                    <span className="text-gray-600 text-sm">
+                      Confidence: {(obj.confidence * 100).toFixed(1)}%
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           ) : (
             <p className="text-muted-foreground">Belum ada hasil deteksi</p>
