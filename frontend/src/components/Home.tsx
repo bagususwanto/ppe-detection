@@ -1,23 +1,24 @@
 import { useState, useRef } from "react";
+import axios from "axios";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Camera, CameraOff, RotateCcw } from "lucide-react";
 
 export default function Home() {
-  // 🔹 State Management
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [resultJson, setResultJson] = useState<any>(null);
+  const [resultImage, setResultImage] = useState<string | null>(null);
 
-  // 🔹 Refs
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // 🔹 Fungsi Kamera
+  // 🔹 Start Camera
   const startCamera = async () => {
     if (isCameraOn) {
-      handleCapture(); // kalau kamera sudah nyala → langsung capture
+      handleCapture();
       return;
     }
 
@@ -55,7 +56,6 @@ export default function Home() {
       }
     }, 1000);
 
-    // Otomatis stop kamera setelah capture
     setTimeout(() => {
       stopCamera();
     }, 4000);
@@ -74,18 +74,61 @@ export default function Home() {
 
     const imageData = canvas.toDataURL("image/png");
     setCapturedImage(imageData);
+
+    // otomatis kirim ke backend setelah capture
+    sendToBackend(imageData);
+  };
+
+  // 🔹 Kirim ke Backend
+  const sendToBackend = async (imageData: string) => {
+    try {
+      // convert base64 → Blob
+      const byteString = atob(imageData.split(",")[1]);
+      const mimeString = imageData.split(",")[0].split(":")[1].split(";")[0];
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+      }
+      const blob = new Blob([ab], { type: mimeString });
+
+      // masukkan ke FormData
+      const formData = new FormData();
+      formData.append("file", blob, "capture.png");
+
+      // 🔹 Ambil JSON
+      const jsonRes = await axios.post(
+        "http://localhost:8000/api/detect/?return_json=true",
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+      setResultJson(jsonRes.data);
+
+      // 🔹 Ambil Image
+      const imgRes = await axios.post(
+        "http://localhost:8000/api/detect/",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          responseType: "blob",
+        }
+      );
+      const imageUrl = URL.createObjectURL(imgRes.data);
+      setResultImage(imageUrl);
+    } catch (error) {
+      console.error("Gagal kirim ke backend:", error);
+    }
   };
 
   return (
     <div className="gap-6 grid grid-cols-1 md:grid-cols-2 min-h-[calc(100vh-12rem)]">
-      {/* 🔹 Kiri: Kamera Preview */}
+      {/* Kamera Preview */}
       <Card className="relative text-center">
         <CardHeader>
           <CardTitle>Kamera</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col items-center w-full">
           <div className="relative flex justify-center items-center bg-black rounded-lg w-full h-96 overflow-hidden">
-            {/* Video */}
             <video
               ref={videoRef}
               autoPlay
@@ -96,14 +139,12 @@ export default function Home() {
               }`}
             />
 
-            {/* Countdown Overlay */}
             {countdown && (
               <div className="absolute inset-0 flex justify-center items-center bg-black/40 font-bold text-white text-6xl animate-pulse">
                 {countdown}
               </div>
             )}
 
-            {/* Hasil Capture */}
             {capturedImage && !countdown && (
               <img
                 src={capturedImage}
@@ -113,18 +154,23 @@ export default function Home() {
             )}
 
             {!isCameraOn && !capturedImage && (
-              <span className="text-gray-400">Camera Preview</span>
+              <span className="text-muted-foreground">
+                Preview kamera akan muncul di sini
+              </span>
             )}
           </div>
 
-          {/* Tombol Aksi */}
+          {/* Tombol */}
           <div className="flex flex-wrap justify-center gap-3 mt-6">
             {capturedImage ? (
               <Button
                 size={"icon"}
-                disabled={!capturedImage}
                 variant="secondary"
-                onClick={() => setCapturedImage(null)}>
+                onClick={() => {
+                  setCapturedImage(null);
+                  setResultJson(null);
+                  setResultImage(null);
+                }}>
                 <RotateCcw />
               </Button>
             ) : (
@@ -141,34 +187,36 @@ export default function Home() {
             </Button>
           </div>
 
-          {/* Hidden canvas untuk capture */}
           <canvas ref={canvasRef} className="hidden" />
         </CardContent>
       </Card>
 
-      {/* 🔹 Kanan: Hasil Pengecekan */}
+      {/* Hasil Pengecekan (JSON + IMAGE) */}
       <Card>
         <CardHeader>
-          <CardTitle>Hasil Pengecekan</CardTitle>
+          <CardTitle>Hasil Deteksi</CardTitle>
         </CardHeader>
-        <CardContent>
-          {capturedImage ? (
+        <CardContent className="space-y-4">
+          {/* JSON sebagai list class */}
+          {resultJson && resultJson.detected_objects.length > 0 ? (
             <ul className="space-y-4">
-              <li className="flex justify-between items-center pb-2 border-b">
-                <span>Helm (Hardhat)</span>
-                <span className="font-semibold text-green-600">✅ Lengkap</span>
-              </li>
-              <li className="flex justify-between items-center pb-2 border-b">
-                <span>Masker</span>
-                <span className="font-semibold text-red-600">❌ Tidak Ada</span>
-              </li>
-              <li className="flex justify-between items-center pb-2 border-b">
-                <span>Sepatu Safety</span>
-                <span className="font-semibold text-green-600">✅ Lengkap</span>
-              </li>
+              {resultJson.detected_objects.map((obj: any, index: number) => (
+                <li className="border-b text-red-600" key={index}>
+                  {obj.class}
+                </li>
+              ))}
             </ul>
           ) : (
-            <p className="text-gray-500">Belum ada hasil pengecekan</p>
+            <p className="text-muted-foreground">Belum ada hasil deteksi</p>
+          )}
+
+          {/* IMAGE */}
+          {resultImage && (
+            <img
+              src={resultImage}
+              alt="Hasil Deteksi"
+              className="mx-auto rounded-md max-h-64"
+            />
           )}
         </CardContent>
       </Card>

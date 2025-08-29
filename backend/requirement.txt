@@ -1,5 +1,6 @@
 cvzone
 fastapi
 ultralytics
-uvcorn
+uvicorn
 python-multipart
+numpy<2.0
