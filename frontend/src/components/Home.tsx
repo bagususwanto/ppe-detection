@@ -1,6 +1,12 @@
 import { useState, useRef } from "react";
 import axios from "axios";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardAction,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Camera,
@@ -9,6 +15,8 @@ import {
   RotateCcw,
   XCircle,
 } from "lucide-react";
+import helmet from "@/assets/helmet.png";
+import vest from "@/assets/vest.png";
 
 export default function Home() {
   const [isCameraOn, setIsCameraOn] = useState(false);
@@ -126,6 +134,22 @@ export default function Home() {
     }
   };
 
+  // Daftar APD yang wajib dicek
+  const requiredItems = [
+    {
+      name: "Hardhat",
+      image: helmet,
+    },
+    {
+      name: "Safety Vest",
+      image: vest,
+    },
+  ];
+
+  // Ambil class hasil deteksi dari backend (handle null/undefined)
+  const detectedClasses: string[] =
+    resultJson?.detected_objects?.map((obj: any) => obj.class) || [];
+
   return (
     <div className="gap-6 grid grid-cols-1 md:grid-cols-2 min-h-[calc(100vh-12rem)]">
       {/* Kamera Preview */}
@@ -203,35 +227,58 @@ export default function Home() {
           <CardTitle>Hasil Deteksi</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* JSON sebagai list class */}
-          {resultJson && resultJson.detected_objects.length > 0 ? (
-            <ul className="space-y-4">
-              {resultJson.detected_objects.map((obj: any, index: number) => {
-                const isNoClass = obj.class.includes("NO"); // cek class yang ada "NO"
+          <ul className="space-y-4">
+            {requiredItems.map((item, index) => {
+              // Jangan cek kelengkapan kalau belum ada resultJson
+              if (!resultJson) {
                 return (
                   <li
                     key={index}
-                    className={`flex items-center justify-between border-b py-1 ${
-                      isNoClass ? "text-red-600" : "text-green-600"
-                    }`}>
+                    className="flex justify-between items-center py-1 border-b">
                     <div className="flex items-center gap-2">
-                      {isNoClass ? (
-                        <XCircle className="w-5 h-5" />
-                      ) : (
-                        <CheckCircle className="w-5 h-5" />
-                      )}
-                      <span>{obj.class}</span>
+                      {/* Preview image kecil */}
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-6 h-6 object-contain"
+                      />
+                      <span>{item.name}</span>
                     </div>
-                    <span className="text-gray-600 text-sm">
-                      Confidence: {(obj.confidence * 100).toFixed(1)}%
-                    </span>
                   </li>
                 );
-              })}
-            </ul>
-          ) : (
-            <p className="text-muted-foreground">Belum ada hasil deteksi</p>
-          )}
+              }
+
+              // Kalau sudah ada hasil deteksi
+              const hasNoItem = detectedClasses.includes(`NO-${item.name}`);
+              const hasItem = detectedClasses.includes(item.name);
+              const isComplete = hasItem && !hasNoItem;
+
+              return (
+                <li
+                  key={index}
+                  className="flex justify-between items-center py-1 border-b">
+                  <div className="flex items-center gap-2">
+                    {/* Preview image kecil */}
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-6 h-6 object-contain"
+                    />
+                    <span>{item.name}</span>
+                  </div>
+                  {isComplete ? (
+                    <span className="flex items-center gap-1 text-green-600">
+                      <CheckCircle className="w-4 h-4" /> Lengkap
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-red-600">
+                      <XCircle className="w-4 h-4" /> Tidak Lengkap
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
 
           {/* IMAGE */}
           {resultImage && (
